@@ -15,17 +15,20 @@ with st.sidebar:
     st.caption("Источник данных: Polygon.io (дневные агрегаты).")
 
 ticker = st.text_input("Тикер:", value="QQQ").strip().upper()
-hz = st.selectbox("Горизонт:", ["short (1–5 дней)","mid (1–4 недели)","long (1–6 месяцев)"], index=1)
-hz = hz.split()[0]
+# --- выбор горизонта ---
+h_label = st.selectbox(
+    "Горизонт:",
+    ["short (1–5 дней)", "mid (1–4 недели)", "long (1–6 месяцев)"]
+)
 
-if st.button("Проанализировать", type="primary"):
-    with st.spinner("Собираю картину…"):
-        try:
-            d = analyze_ticker(ticker, horizon=hz)
-            st.success(humanize(d, ticker))
-            with st.expander("Диагностика (для владельца)"):
-                st.json(d.meta)
-        except Exception as e:
-            st.error(f"Ошибка: {e}")
+# ключ горизонта: 'short' | 'mid' | 'long'
+if h_label.startswith("short"):
+    horizon = "short"
+elif h_label.startswith("mid"):
+    horizon = "mid"
 else:
-    st.info("Укажи тикер, выбери горизонт и нажми «Проанализировать».")
+    horizon = "long"
+
+# сколько дней тянем историю для анализа (int!)
+LOOKBACK_BY_HZ = {"short": 90, "mid": 400, "long": 1200}
+lookback_days = int(LOOKBACK_BY_HZ[horizon])
